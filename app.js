@@ -203,28 +203,42 @@ router.route("/Detail").get(function (req, res) {
 
   console.log("Get " + menu + "의 " + idx + "번글 호출");
 
-  const sql =
-    "SELECT * FROM board WHERE menu='" +
-    menu +
-    "' AND idx=" +
-    idx +
-    " order by idx asc";
+  if (!isNaN(menu) || menu === "down") {
+    // Gallery 일때
+    const sql =
+      "SELECT * FROM gallery WHERE menu='" + menu + " order by idx asc";
 
-  const ViewsPlussql =
-    "UPDATE board SET views = views + 1 WHERE menu='" +
-    menu +
-    "' AND idx=" +
-    idx +
-    ";";
-
-  con.query(ViewsPlussql, (err, results) => {});
-
-  if (!isNaN(idx)) {
-    // 숫자이여야지만 들어가게
     con.query(sql, (err, results) => {
       const Tojson = JSON.parse(JSON.stringify(results));
       if (err) throw err;
       return res.send(Tojson);
     });
+  }
+  // 일반 게시판일때
+  else {
+    const sql =
+      "SELECT * FROM board WHERE menu='" +
+      menu +
+      "' AND idx=" +
+      idx +
+      " order by idx asc";
+
+    const ViewsPlussql =
+      "UPDATE board SET views = views + 1 WHERE menu='" +
+      menu +
+      "' AND idx=" +
+      idx +
+      ";";
+
+    con.query(ViewsPlussql, (err, results) => {});
+
+    if (!isNaN(idx)) {
+      // 숫자이여야지만 들어가게
+      con.query(sql, (err, results) => {
+        const Tojson = JSON.parse(JSON.stringify(results));
+        if (err) throw err;
+        return res.send(Tojson);
+      });
+    }
   }
 });
