@@ -163,6 +163,13 @@ app.post("/SignOut", (req, res) => {
   res.redirect("/");
 });
 
+app.use("/PLZ", function (req, res) {
+  console.log("PLZ");
+  res.sendFile(
+    path.join(__dirname, "/assets/Catlas_Gallery/2021", "Corner1.png")
+  );
+});
+
 router.route("/Board").get(function (req, res) {
   const menu = req.query.BoardPath;
 
@@ -173,13 +180,15 @@ router.route("/Board").get(function (req, res) {
     menu +
     "' order by idx asc";
 
-  con.query(sql, (err, results) => {
-    const Tojson = JSON.parse(JSON.stringify(results));
+  if (isNaN(menu)) {
+    con.query(sql, (err, results) => {
+      const Tojson = JSON.parse(JSON.stringify(results));
 
-    Tojson.contents = undefined;
-    if (err) throw err;
-    return res.send(Tojson);
-  });
+      Tojson.contents = undefined;
+      if (err) throw err;
+      return res.send(Tojson);
+    });
+  }
 });
 
 router.route("/Detail").get(function (req, res) {
@@ -204,10 +213,12 @@ router.route("/Detail").get(function (req, res) {
 
   con.query(ViewsPlussql, (err, results) => {});
 
-  if (typeof idx != INT) idx = 1; // 임시 에러 처리
-  con.query(sql, (err, results) => {
-    const Tojson = JSON.parse(JSON.stringify(results));
-    if (err) throw err;
-    return res.send(Tojson);
-  });
+  if (!isNaN(idx)) {
+    // 숫자이여야지만 들어가게
+    con.query(sql, (err, results) => {
+      const Tojson = JSON.parse(JSON.stringify(results));
+      if (err) throw err;
+      return res.send(Tojson);
+    });
+  }
 });
