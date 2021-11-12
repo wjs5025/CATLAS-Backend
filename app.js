@@ -163,12 +163,18 @@ app.post("/SignOut", (req, res) => {
   res.redirect("/");
 });
 
-app.use("/PLZ", function (req, res) {
-  console.log("PLZ");
-  res.sendFile(
-    path.join(__dirname, "/assets/Catlas_Gallery/2021", "Corner1.png")
-  );
+//Use 쓰면 되냐 걍?
+app.use("/ImageLinking", function (req, res) {
+  console.log("ImageLinking");
+  const path = req.query.path;
+  const filename = req.query.filename;
+
+  res.sendFile(path.join(__dirname, path, filename));
+
+  const img_src =
+    "http://3001/ImageLinking?Path=" + 경로 + "&Filename=" + 파일이름;
 });
+//path.join(__dirname, "/assets/Catlas_Gallery/2021", "Corner1.png")
 
 router.route("/Board").get(function (req, res) {
   const menu = req.query.BoardPath;
