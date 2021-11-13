@@ -166,13 +166,12 @@ app.post("/SignOut", (req, res) => {
 //Use 쓰면 되냐 걍?
 app.use("/ImageLinking", function (req, res) {
   console.log("ImageLinking");
-  const path = req.query.path;
-  const filename = req.query.filename;
 
-  res.sendFile(path.join(__dirname, path, filename));
+  const path = req.query.Path;
+  const filename = req.query.Filename;
+  console.log(path, filename);
 
-  const img_src =
-    "http://3001/ImageLinking?Path=" + 경로 + "&Filename=" + 파일이름;
+  res.sendFile(__dirname + path + filename);
 });
 //path.join(__dirname, "/assets/Catlas_Gallery/2021", "Corner1.png")
 
@@ -181,19 +180,32 @@ router.route("/Board").get(function (req, res) {
 
   console.log("Get " + menu + " Board");
 
-  const sql =
-    "SELECT menu,writer,date,views,idx,title FROM board WHERE menu='" +
-    menu +
-    "' order by idx asc";
+  if (!isNaN(menu) || menu === "down") {
+    // Gallery 일때
+    console.log("Gallery");
+    const sql =
+      "SELECT * FROM gallery WHERE menu='" + menu + "' order by idx asc";
 
-  if (isNaN(menu)) {
     con.query(sql, (err, results) => {
       const Tojson = JSON.parse(JSON.stringify(results));
-
-      Tojson.contents = undefined;
       if (err) throw err;
       return res.send(Tojson);
     });
+  } else {
+    const sql =
+      "SELECT menu,writer,date,views,idx,title FROM board WHERE menu='" +
+      menu +
+      "' order by idx asc";
+
+    if (isNaN(menu)) {
+      con.query(sql, (err, results) => {
+        const Tojson = JSON.parse(JSON.stringify(results));
+
+        Tojson.contents = undefined;
+        if (err) throw err;
+        return res.send(Tojson);
+      });
+    }
   }
 });
 
@@ -203,42 +215,72 @@ router.route("/Detail").get(function (req, res) {
 
   console.log("Get " + menu + "의 " + idx + "번글 호출");
 
-  if (!isNaN(menu) || menu === "down") {
-    // Gallery 일때
-    const sql =
-      "SELECT * FROM gallery WHERE menu='" + menu + " order by idx asc";
+  // 일반 게시판일때
+  const sql =
+    "SELECT * FROM board WHERE menu='" +
+    menu +
+    "' AND idx=" +
+    idx +
+    " order by idx asc";
 
+  const ViewsPlussql =
+    "UPDATE board SET views = views + 1 WHERE menu='" +
+    menu +
+    "' AND idx=" +
+    idx +
+    ";";
+
+  con.query(ViewsPlussql, (err, results) => {});
+
+  if (!isNaN(idx)) {
+    // 숫자이여야지만 들어가게
     con.query(sql, (err, results) => {
       const Tojson = JSON.parse(JSON.stringify(results));
       if (err) throw err;
       return res.send(Tojson);
     });
   }
+});
+
+router.route("/Home").get(function (req, res) {
+  console.log("Get Home");
+
+  let ResJson = [];
   // 일반 게시판일때
-  else {
-    const sql =
-      "SELECT * FROM board WHERE menu='" +
-      menu +
-      "' AND idx=" +
-      idx +
-      " order by idx asc";
+  const Noticesql =
+    "SELECT title,contents,idx,date FROM board WHERE menu='공지사항' order by idx desc LIMIT 2";
 
-    const ViewsPlussql =
-      "UPDATE board SET views = views + 1 WHERE menu='" +
-      menu +
-      "' AND idx=" +
-      idx +
-      ";";
+  const FreeForumsql =
+    "SELECT title,contents,idx,date FROM board WHERE menu='자유게시판' order by idx desc LIMIT 1";
 
-    con.query(ViewsPlussql, (err, results) => {});
+  const QuestionForumsql =
+    "SELECT title,contents,idx,date FROM board WHERE menu='질문게시판' order by idx desc LIMIT 1";
 
-    if (!isNaN(idx)) {
-      // 숫자이여야지만 들어가게
-      con.query(sql, (err, results) => {
-        const Tojson = JSON.parse(JSON.stringify(results));
-        if (err) throw err;
-        return res.send(Tojson);
-      });
-    }
-  }
+  const AdvertisingForumsql =
+    "SELECT title,contents,idx,date FROM board WHERE menu='홍보게시판' order by idx desc LIMIT 1";
+
+  con.query(Noticesql, (err, results) => {
+    const Tojson = JSON.parse(JSON.stringify(results));
+    if (err) throw err;
+    ResJson.push(Tojson);
+  });
+
+  con.query(FreeForumsql, (err, results) => {
+    const Tojson = JSON.parse(JSON.stringify(results));
+    if (err) throw err;
+    ResJson.push(Tojson);
+  });
+
+  con.query(QuestionForumsql, (err, results) => {
+    const Tojson = JSON.parse(JSON.stringify(results));
+    if (err) throw err;
+    ResJson.push(Tojson);
+  });
+
+  con.query(AdvertisingForumsql, (err, results) => {
+    const Tojson = JSON.parse(JSON.stringify(results));
+    if (err) throw err;
+    ResJson.push(Tojson);
+    return res.send(ResJson);
+  });
 });
