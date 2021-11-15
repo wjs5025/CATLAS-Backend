@@ -92,24 +92,18 @@ app.post("/SignIn", (req, res) => {
 router.route("/SignIn").post(function (req, res) {
   console.log("Post SignIn");
 
-  console.log(req.body.params);
-  // console.log(req.session);
-
   const userid = req.body.params.userid;
   const pwd2 = req.body.params.password;
-  const sql = "SELECT * FROM users WHERE name=?";
+  const sql = "SELECT * FROM users WHERE userid=?";
   const SHA2 = "SHA2('" + pwd2 + "', 256)";
   const pwdHasing = "SELECT " + SHA2 + ";";
   let pwd;
   con.query(pwdHasing, (err, results) => {
     const New = Object.values(JSON.parse(JSON.stringify(results[0])));
-    console.log(New[0]);
     pwd = New[0];
   });
 
   con.query(sql, [userid, pwd], (err, results) => {
-    console.log("User info is: ", results);
-    console.log("pwd info is: ", pwd);
     if (err) throw err;
     if (!results[0]) return res.send("please check your ID");
     const user = results[0];
@@ -128,13 +122,6 @@ router.route("/SignIn").post(function (req, res) {
 
 router.route("/SignUp").post(function (req, res) {
   console.log("Post SignUp");
-  console.log(req.body.params);
-  console.log(req.body.params.userid);
-  console.log(req.body.params.password);
-  console.log(req.body.params.name);
-  console.log(req.body.params.email);
-  console.log(req.body.params.phonenumber);
-  console.log(req.session);
 
   const userid = req.body.params.userid;
   const password = req.body.params.password;
@@ -154,23 +141,146 @@ router.route("/SignUp").post(function (req, res) {
     phonenumber +
     "');";
 
-  con.query(sql, [name], (err, results) => {
-    console.log("User info is: ", results);
+  con.query(sql, (err, results) => {
     if (err) throw err;
     return res.send("Clear");
   });
 });
 
-app.get("/Signout", (req, res) => {
-  console.log("/Signout _ GET");
+app.get("/SignOut", (req, res) => {
+  console.log("/SignOut _ GET");
   req.session.isLogined = false;
   req.session.destroy();
   res.redirect("/");
 });
 
-app.post("/Signout", (req, res) => {
-  console.log("/Signout _ POST");
+app.post("/SignOut", (req, res) => {
+  console.log("/SignOut _ POST");
   req.session.isLogined = false;
-  req.session.destroy();
+  req.session.destroy(function () {
+    req.session;
+  });
   res.redirect("/");
+});
+
+//Use 쓰면 되냐 걍?
+app.use("/ImageLinking", function (req, res) {
+  console.log("ImageLinking");
+
+  const path = req.query.Path;
+  const filename = req.query.Filename;
+  console.log(path, filename);
+
+  res.sendFile(__dirname + path + filename);
+});
+//path.join(__dirname, "/assets/Catlas_Gallery/2021", "Corner1.png")
+
+router.route("/Board").get(function (req, res) {
+  const menu = req.query.BoardPath;
+
+  console.log("Get " + menu + " Board");
+
+  if (!isNaN(menu) || menu === "down") {
+    // Gallery 일때
+    console.log("Gallery");
+    const sql =
+      "SELECT * FROM gallery WHERE menu='" + menu + "' order by idx asc";
+
+    con.query(sql, (err, results) => {
+      const Tojson = JSON.parse(JSON.stringify(results));
+      if (err) throw err;
+      return res.send(Tojson);
+    });
+  } else {
+    const sql =
+      "SELECT menu,writer,date,views,idx,title FROM board WHERE menu='" +
+      menu +
+      "' order by idx asc";
+
+    if (isNaN(menu)) {
+      con.query(sql, (err, results) => {
+        const Tojson = JSON.parse(JSON.stringify(results));
+
+        Tojson.contents = undefined;
+        if (err) throw err;
+        return res.send(Tojson);
+      });
+    }
+  }
+});
+
+router.route("/Detail").get(function (req, res) {
+  const idx = req.query.PostNum;
+  const menu = req.query.BoardPath;
+
+  console.log("Get " + menu + "의 " + idx + "번글 호출");
+
+  // 일반 게시판일때
+  const sql =
+    "SELECT * FROM board WHERE menu='" +
+    menu +
+    "' AND idx=" +
+    idx +
+    " order by idx asc";
+
+  const ViewsPlussql =
+    "UPDATE board SET views = views + 1 WHERE menu='" +
+    menu +
+    "' AND idx=" +
+    idx +
+    ";";
+
+  con.query(ViewsPlussql, (err, results) => {});
+
+  if (!isNaN(idx)) {
+    // 숫자이여야지만 들어가게
+    con.query(sql, (err, results) => {
+      const Tojson = JSON.parse(JSON.stringify(results));
+      if (err) throw err;
+      return res.send(Tojson);
+    });
+  }
+});
+
+router.route("/Home").get(function (req, res) {
+  console.log("Get Home");
+
+  let ResJson = [];
+  // 일반 게시판일때
+  const Noticesql =
+    "SELECT title,contents,idx,date FROM board WHERE menu='공지사항' order by idx desc LIMIT 2";
+
+  const FreeForumsql =
+    "SELECT title,contents,idx,date FROM board WHERE menu='자유게시판' order by idx desc LIMIT 1";
+
+  const QuestionForumsql =
+    "SELECT title,contents,idx,date FROM board WHERE menu='질문게시판' order by idx desc LIMIT 1";
+
+  const AdvertisingForumsql =
+    "SELECT title,contents,idx,date FROM board WHERE menu='홍보게시판' order by idx desc LIMIT 1";
+
+  con.query(Noticesql, (err, results) => {
+    const Tojson = JSON.parse(JSON.stringify(results));
+    if (err) throw err;
+    ResJson.push(Tojson);
+  });
+
+  con.query(FreeForumsql, (err, results) => {
+    const Tojson = JSON.parse(JSON.stringify(results));
+    if (err) throw err;
+    ResJson.push(Tojson);
+  });
+
+  con.query(QuestionForumsql, (err, results) => {
+    const Tojson = JSON.parse(JSON.stringify(results));
+    if (err) throw err;
+    ResJson.push(Tojson);
+  });
+
+  con.query(AdvertisingForumsql, (err, results) => {
+    const Tojson = JSON.parse(JSON.stringify(results));
+    if (err) throw err;
+    ResJson.push(Tojson);
+    return res.send(ResJson);
+  });
 });
