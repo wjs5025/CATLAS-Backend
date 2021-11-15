@@ -275,6 +275,36 @@ router.route("/Detail").get(function (req, res) {
   }
 });
 
+router.route("/Comment").get(function (req, res) {
+  const idx = req.query.PostNum;
+  const menu = req.query.BoardPath;
+
+  console.log("Get " + menu + "의 " + idx + "번글 Comment 호출");
+
+  // 댓글 => Forum 일때만
+
+  if (
+    menu === "자유게시판" ||
+    menu === "질문게시판" ||
+    menu === "홍보게시판" ||
+    menu === "동아리게시판" ||
+    menu === "IT게시판" ||
+    menu === "자료실"
+  ) {
+    const cmtSql =
+      "SELECT * FROM comment WHERE menu='" +
+      menu +
+      "' AND target=" +
+      idx +
+      " order by idx asc";
+    con.query(cmtSql, (err, results) => {
+      const Tojson = JSON.parse(JSON.stringify(results));
+      if (err) throw err;
+      return res.send(Tojson);
+    });
+  }
+});
+
 router.route("/Home").get(function (req, res) {
   console.log("Get Home");
 
