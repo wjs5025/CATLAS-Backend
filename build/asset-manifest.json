@@ -1,0 +1,33 @@
+{
+  "files": {
+    "main.css": "/static/css/main.b13c11a4.chunk.css",
+    "main.js": "/static/js/main.49c012e3.chunk.js",
+    "main.js.map": "/static/js/main.49c012e3.chunk.js.map",
+    "runtime-main.js": "/static/js/runtime-main.f16fb19a.js",
+    "runtime-main.js.map": "/static/js/runtime-main.f16fb19a.js.map",
+    "static/css/2.488f3494.chunk.css": "/static/css/2.488f3494.chunk.css",
+    "static/js/2.c3af4b2b.chunk.js": "/static/js/2.c3af4b2b.chunk.js",
+    "static/js/2.c3af4b2b.chunk.js.map": "/static/js/2.c3af4b2b.chunk.js.map",
+    "index.html": "/index.html",
+    "static/css/2.488f3494.chunk.css.map": "/static/css/2.488f3494.chunk.css.map",
+    "static/css/main.b13c11a4.chunk.css.map": "/static/css/main.b13c11a4.chunk.css.map",
+    "static/js/2.c3af4b2b.chunk.js.LICENSE.txt": "/static/js/2.c3af4b2b.chunk.js.LICENSE.txt",
+    "static/media/Back.982e54d1.png": "/static/media/Back.982e54d1.png",
+    "static/media/CATLAS Logo on.3420e74c.png": "/static/media/CATLAS Logo on.3420e74c.png",
+    "static/media/GNU Logo.22366f47.png": "/static/media/GNU Logo.22366f47.png",
+    "static/media/App.css": "/static/media/SCDream9.c8e7afd8.otf",
+    "static/media/ToTop.9312b379.png": "/static/media/ToTop.9312b379.png",
+    "static/media/comment2.2c5153b9.png": "/static/media/comment2.2c5153b9.png",
+    "static/media/csLogo.de5a7931.png": "/static/media/csLogo.de5a7931.png",
+    "static/media/linkIcon.b253c0da.png": "/static/media/linkIcon.b253c0da.png",
+    "static/media/submit.a6ffd119.png": "/static/media/submit.a6ffd119.png",
+    "static/media/write2.a4f8b8b3.png": "/static/media/write2.a4f8b8b3.png"
+  },
+  "entrypoints": [
+    "static/js/runtime-main.f16fb19a.js",
+    "static/css/2.488f3494.chunk.css",
+    "static/js/2.c3af4b2b.chunk.js",
+    "static/css/main.b13c11a4.chunk.css",
+    "static/js/main.49c012e3.chunk.js"
+  ]
+}
