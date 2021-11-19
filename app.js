@@ -14,12 +14,14 @@ const sessionStore = new MySQLStore(dbconfig);
 const con = mysql.createConnection(dbconfig);
 const port = process.env.PORT || 3001;
 
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ Cors 설정
 app.use(
   cors({
     origin: "http://172.18.3.24:3000",
     credentials: true,
   })
 );
+
 app.use(cookieParser());
 app.use(
   session({
@@ -35,37 +37,56 @@ app.use(
     },
   })
 );
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 // Router Setting
 module.exports = router;
 
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 세션 확인용 / 미완성
+
 app.use((req, res, next) => {
-  const sql =
-    "SELECT * FROM sessions WHERE session_id='" + req.session.Sid + "';";
-  //console.log("SQL=", sql);
-  con.query(sql, (err, results) => {
-    //console.log("결과=", results);
-    if (results[0] != undefined && results[0].session_id == req.query.Sid) {
-      const DATA = JSON.parse(JSON.stringify(results[0].data));
-      //console.log("로그인됐음", DATA);
-      //console.log("Sid:", req.sessuion.Id);
-      //res.send({ user_id: req.session.id });
-    }
-  });
+  // console.log("SID = ", req.session.Id);
+  // console.log("isLogined = ", req.session.isLogined);
+  if (req.session.isLogined != undefined) {
+    const sql =
+      "SELECT * FROM sessions WHERE session_id='" + req.sessionID + "';";
+
+    con.query(sql, (err, results) => {
+      try {
+        let Tojson = results[0].data;
+        const ID = Tojson.slice(Tojson.indexOf(`"Id":"`) + 6, -2);
+
+        if (results[0] != undefined && req.session.Id === ID) {
+          //res.send({ access: true });
+        } else {
+          //res.send({ access: false });
+        }
+      } catch (exception) {
+        return res.send("error");
+      }
+    });
+  }
 
   next();
 });
+
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 처음 시작할 때, 로그 확인용
 
 app.use(function (req, res, next) {
   var today = new Date();
   let hour = today.getHours();
   let minute = today.getMinutes();
   let second = today.getSeconds();
-  console.log("Time:", `${hour}:${minute}:${second}`);
-
-  res.cookie("aaa", "bbb");
-  req.session.ss = "123";
+  let dd = today.getDate();
+  let mm = today.getMonth() + 1; //January is 0!
+  let yyyy = today.getFullYear();
+  if (dd < 10) dd = "0" + dd;
+  if (mm < 10) mm = "0" + mm;
+  today = yyyy + "-" + mm + "-" + dd;
+  console.log("Time:", `${yyyy}-${mm}-${dd} ${hour}:${minute}:${second}`);
 
   // if (req.session.Sid) {
   //   console.log("session에 sid 있음!", req.session.Sid);
@@ -73,9 +94,10 @@ app.use(function (req, res, next) {
   // } else {
   //   console.log("session 없음");
   // }
-
   next();
 });
+
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 빌드 한 것 메인페이지 리다이렉션
 
 app.use(express.static(path.join(__dirname, "./build")));
 
@@ -87,36 +109,11 @@ router.get("/", (req, res, next) => {
   });
 });
 
-// router.route("/").get(function (req, res) {
-//   console.log("get /");
-//   const sql = "SELECT * FROM users";
-//   con.query(sql, (err, results) => {
-//     if (err) throw err;
-//     return results.res;
-//   });
-// });
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 로그인
 
-// app.post("/", (req, res) => {
-//   console.log("post /");
-// });
-
-// router.route("/SignCheck").get(function (req, res) {
-//   console.log("isLogined =?  " + req.session.isLogined);
-//   if (req.session.isLogined == undefined) return res.send(false);
-//   else return res.send(true);
-// });
-
-// router.route("/WhoLogined").get(function (req, res) {
-//   console.log("WhoLogined =?  " + req.session.name);
-//   return res.send(req.session.name);
-// });
-
-//app.post("/SignIn", (req, res) => {
 router.route("/SignIn").post(function (req, res) {
   console.log("Post SignIn");
-  //console.log(req.body.params);
-  // console.log(req.session);
-  // console.log(req);
+
   const userid = req.body.params.userid;
   const pwd2 = req.body.params.password;
   const sql = "SELECT * FROM users WHERE userid=?";
@@ -124,27 +121,37 @@ router.route("/SignIn").post(function (req, res) {
   const pwdHasing = "SELECT " + SHA2 + ";";
   let pwd;
   con.query(pwdHasing, (err, results) => {
-    const New = Object.values(JSON.parse(JSON.stringify(results[0])));
-    pwd = New[0];
-  });
+    try {
+      const New = Object.values(JSON.parse(JSON.stringify(results[0])));
+      pwd = New[0];
+    } catch (exception) {
+      return res.send("error");
+    }
+    con.query(sql, [userid, pwd], (err, results) => {
+      try {
+        if (!results[0]) return res.send("error");
 
-  con.query(sql, [userid, pwd], (err, results) => {
-    if (err) throw err;
-    if (!results[0]) return res.send("error");
-    const user = results[0];
-    if (user.password != pwd) return res.send("error");
-    else if (user.userid == userid && user.password == pwd) {
-      req.session.Id = user.userid;
-      req.session.isLogined = true;
-      // console.log("넘기는값", req.session);
-      req.session.save(function () {
-        return res.send(req.sessionID);
-        //return res.render("/Signout", { id: req.session.id });
-        //return res.send("login success");
-      });
-    } else return res.send("error");
+        const user = results[0];
+        if (user.password != pwd) return res.send("error");
+        else if (user.userid == userid && user.password == pwd) {
+          req.session.isLogined = true;
+          req.session.Id = user.userid;
+
+          // console.log("넘기는값", req.session);
+          req.session.save(function () {
+            return res.send(req.sessionID);
+            //return res.render("/Signout", { id: req.session.id });
+            //return res.send("login success");
+          });
+        } else return res.send("error");
+      } catch (exception) {
+        return res.send("error");
+      }
+    });
   });
 });
+
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 회원가입
 
 router.route("/SignUp").post(function (req, res) {
   console.log("Post SignUp");
@@ -169,54 +176,61 @@ router.route("/SignUp").post(function (req, res) {
 
   con.query(sql, [name], (err, results) => {
     // console.log("User info is: ", results);
-    if (err) throw err;
-    return res.send("Clear");
+    try {
+      return res.send("Clear");
+    } catch (exception) {
+      return res.send("error");
+    }
   });
 });
 
-//Use 쓰면 되냐 걍?
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 이미지 보내주기
 app.use("/ImageLinking", function (req, res) {
   console.log("ImageLinking");
-  const path = req.query.Path;
-  const filename = req.query.Filename;
+  const path = req.query.path;
+  const filename = req.query.filename;
   //console.log(path, filename);
   res.sendFile(__dirname + path + filename);
 });
 //path.join(__dirname, "/assets/Catlas_Gallery/2021", "Corner1.png")
 
+//
+
+// router.get("/Fourm", (req, res, next) => {
+//   res.redirect("/자유게시판");
+// });
+
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 게시글 목록
+
 router.route("/Board").get(function (req, res) {
   const menu = req.query.BoardPath;
-
+  let sql;
   console.log("Get " + menu + " Board");
 
-  if (!isNaN(menu) || menu === "down") {
-    // Gallery 일때
-    console.log("Gallery");
-    const sql =
-      "SELECT * FROM gallery WHERE menu='" + menu + "' order by idx asc";
-
-    con.query(sql, (err, results) => {
-      const Tojson = JSON.parse(JSON.stringify(results));
-      if (err) throw err;
-      return res.send(Tojson);
-    });
-  } else {
-    const sql =
-      "SELECT menu,writer,date,views,idx,title FROM board WHERE menu='" +
+  if (menu === "down" || !isNaN(menu)) {
+    // 갤러리
+    sql =
+      "SELECT menu,writer,date,views,idx,title,path,filename,comment_count FROM board WHERE menu='" +
       menu +
       "' order by idx asc";
-
-    if (isNaN(menu)) {
-      con.query(sql, (err, results) => {
-        const Tojson = JSON.parse(JSON.stringify(results));
-
-        Tojson.contents = undefined;
-        if (err) throw err;
-        return res.send(Tojson);
-      });
-    }
+  } else {
+    sql =
+      "SELECT menu,writer,date,views,idx,title,recommend,comment_count FROM board WHERE menu='" +
+      menu +
+      "' order by idx asc";
   }
+  con.query(sql, (err, results) => {
+    try {
+      const Tojson = JSON.parse(JSON.stringify(results));
+      //console.log(Tojson);
+      return res.send(Tojson);
+    } catch (exception) {
+      return res.send("error");
+    }
+  });
 });
+
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 게시글 세부사항
 
 router.route("/Detail").get(function (req, res) {
   const idx = req.query.PostNum;
@@ -234,7 +248,12 @@ router.route("/Detail").get(function (req, res) {
     "' AND idx=" +
     idx +
     ";";
-  con.query(ViewsPlussql, (err, results) => {});
+  con.query(ViewsPlussql, (err, results) => {
+    try {
+    } catch (exception) {
+      return res.send("error");
+    }
+  });
 
   // 일반 게시판일때
   const sql =
@@ -250,22 +269,30 @@ router.route("/Detail").get(function (req, res) {
     // 숫자이여야지만 들어가게
 
     con.query(sql, (err, results) => {
-      const Tojson = JSON.parse(JSON.stringify(results));
-      if (err) throw err;
-      ResJson.push(Tojson);
+      try {
+        const Tojson = JSON.parse(JSON.stringify(results));
+        if (err) throw err;
+        ResJson.push(Tojson);
 
-      // 2. Forum- 댓글 정보
-
+        // 2. Forum- 댓글 정보
+      } catch (exception) {
+        return res.send("error");
+      }
       const cmtSql =
         "SELECT contents,date,writer,idx FROM comment WHERE menu='" +
         menu +
         "' AND target=" +
         idx +
         " order by idx asc";
+
       con.query(cmtSql, (err, results) => {
-        const Tojson = JSON.parse(JSON.stringify(results));
-        if (err) throw err;
-        ResJson.push(Tojson);
+        try {
+          const Tojson = JSON.parse(JSON.stringify(results));
+          if (err) throw err;
+          ResJson.push(Tojson);
+        } catch (exception) {
+          return res.send("error");
+        }
       });
     });
 
@@ -276,20 +303,27 @@ router.route("/Detail").get(function (req, res) {
 
     con.query(IDsql, (err, results) => {
       const Tojson = JSON.parse(JSON.stringify(results));
-      Query_id = Tojson[0].id;
+      try {
+        Query_id = Tojson[0].id;
 
-      const sql =
-        "SELECT recommend, recommend_users FROM board WHERE menu='" +
-        menu +
-        "' AND idx=" +
-        idx +
-        " order by idx asc";
+        const sql =
+          "SELECT recommend, recommend_users FROM board WHERE menu='" +
+          menu +
+          "' AND idx=" +
+          idx +
+          " order by idx asc";
+      } catch (exception) {
+        return res.send("error");
+      }
 
       con.query(sql, [idx, menu, userid], (err, results) => {
-        const Tojson = JSON.parse(JSON.stringify(results));
-        Recommend_count = Tojson[0].recommend;
-        Recommend_users = Tojson[0].recommend_users;
-
+        try {
+          const Tojson = JSON.parse(JSON.stringify(results));
+          Recommend_count = Tojson[0].recommend;
+          Recommend_users = Tojson[0].recommend_users;
+        } catch (exception) {
+          return res.send("error");
+        }
         const Userfindsql =
           "SELECT recommend_users FROM board WHERE menu='" +
           menu +
@@ -298,32 +332,62 @@ router.route("/Detail").get(function (req, res) {
 
         let TempString = "/";
         let Userupdatesql = "";
+
         con.query(Userfindsql, (err, results) => {
-          const Tojson = JSON.parse(JSON.stringify(results));
-          TempString = Tojson[0].recommend_users;
-          if (TempString.indexOf("/" + Query_id + "/") != -1) {
-            ResJson.push({ state: true, Recommend_count: Recommend_count });
-          } else {
-            ResJson.push({ state: false, Recommend_count: Recommend_count });
+          try {
+            const Tojson = JSON.parse(JSON.stringify(results));
+            TempString = Tojson[0].recommend_users;
+            if (TempString.indexOf("/" + Query_id + "/") != -1) {
+              ResJson.push({ state: true, Recommend_count: Recommend_count });
+            } else {
+              ResJson.push({ state: false, Recommend_count: Recommend_count });
+            }
+          } catch (exception) {
+            return res.send("error");
           }
-          return res.send(ResJson);
+          if (menu === "down" || !isNaN(menu)) {
+            // 갤러리
+            const Imagesql =
+              "SELECT idx,path,filename FROM gallery WHERE menu='" +
+              menu +
+              "' AND target=" +
+              idx;
+
+            con.query(Imagesql, (err, results) => {
+              try {
+                const Tojson = JSON.parse(JSON.stringify(results));
+                ResJson.push(Tojson);
+                return res.send(ResJson);
+              } catch (exception) {
+                return res.send("error");
+              }
+            });
+          } else {
+            return res.send(ResJson);
+          }
         });
       });
     });
-  }
+  } else return res.send("error");
 });
 
-//  댓글 ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 댓글  작성
 
 router.route("/Comment").get(function (req, res) {
   const idx = req.query.PostNum;
   const menu = req.query.BoardPath;
   const userid = req.query.userid;
   const contents = req.query.contents;
-  let today = new Date();
+
+  const curr = new Date();
+  const utc = curr.getTime() + 9 * 60 * 60 * 1000;
+  let today = new Date(utc);
   let dd = today.getDate();
   let mm = today.getMonth() + 1; //January is 0!
   let yyyy = today.getFullYear();
+  let hour = today.getHours();
+  let minute = today.getMinutes();
+  let second = today.getSeconds();
 
   if (dd < 10) {
     dd = "0" + dd;
@@ -333,8 +397,7 @@ router.route("/Comment").get(function (req, res) {
     mm = "0" + mm;
   }
 
-  today = yyyy + "-" + mm + "-" + dd;
-  console.log("날짜= ", today);
+  today = yyyy + "-" + mm + "-" + dd + " " + hour + ":" + minute + ":" + second;
   const Indexsql =
     "SELECT idx FROM comment WHERE menu='" +
     menu +
@@ -342,24 +405,30 @@ router.route("/Comment").get(function (req, res) {
     idx +
     " order by idx desc LIMIT 1";
 
-  console.log(Indexsql);
   con.query(Indexsql, (err, results) => {
-    const Tojson = JSON.parse(JSON.stringify(results));
-    console.log(Tojson);
-    const index = Tojson[0].idx + 1;
+    try {
+      const Tojson = JSON.parse(JSON.stringify(results));
+      let index = 0;
+      if (!Tojson[0]) {
+        index = 1;
+      } else {
+        index = Tojson[0].idx + 1;
+      }
 
-    console.log(
-      "Get " +
-        menu +
-        "의 " +
-        idx +
-        "번글 " +
-        index +
-        "번째 Comment를 " +
-        userid +
-        "가 작성"
-    );
-
+      console.log(
+        "Get " +
+          menu +
+          "의 " +
+          idx +
+          "번글 " +
+          index +
+          "번째 Comment를 " +
+          userid +
+          "가 작성"
+      );
+    } catch (exception) {
+      return res.send("error");
+    }
     const sql =
       "INSERT INTO comment ( contents, date, menu, writer, idx, target) VALUES ( '" +
       contents +
@@ -374,23 +443,165 @@ router.route("/Comment").get(function (req, res) {
       "', '" +
       idx +
       "');";
+    //console.log(sql);
     con.query(sql, (err, results) => {
-      // const cmtSql =
-      //   "SELECT contents,date,writer,idx FROM comment WHERE menu='" +
-      //   menu +
-      //   "' AND target=" +
-      //   idx +
-      //   " order by idx asc";
-      // con.query(cmtSql, (err, results) => {
-      //   const Tojson = JSON.parse(JSON.stringify(results));
-      //   if (err) throw err;
-      //   return res.send(Tojson);
-      // });
+      try {
+        const CommentPlussql =
+          "UPDATE board SET comment_count = comment_count + 1 WHERE menu='" +
+          menu +
+          "' AND idx=" +
+          idx +
+          ";";
+        con.query(CommentPlussql, (err, results) => {});
+        // const cmtSql =
+        //   "SELECT contents,date,writer,idx FROM comment WHERE menu='" +
+        //   menu +
+        //   "' AND target=" +
+        //   idx +
+        //   " order by idx asc";
+        // con.query(cmtSql, (err, results) => {
+        //   const Tojson = JSON.parse(JSON.stringify(results));
+        //   if (err) throw err;
+        //   return res.send(Tojson);
+        // });
+      } catch (exception) {
+        return res.send("error");
+      }
     });
   });
   return res.send("/");
 });
 
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 댓글  삭제
+
+router.route("/Comment_Delete").get(function (req, res) {
+  const idx = req.query.PostNum;
+  const menu = req.query.BoardPath;
+  const userid = req.query.userid;
+  const commentidx = req.query.idx;
+  const sql =
+    "SELECT writer FROM comment WHERE menu='" +
+    menu +
+    "' AND target=" +
+    idx +
+    " AND idx=" +
+    commentidx +
+    ";";
+
+  con.query(sql, (err, results) => {
+    try {
+      const Tojson = JSON.parse(JSON.stringify(results));
+      if (Tojson[0].writer === userid) {
+        const Delsql =
+          "DELETE FROM comment WHERE menu='" +
+          menu +
+          "' AND target=" +
+          idx +
+          " AND idx=" +
+          commentidx +
+          ";";
+        con.query(Delsql, (err, results) => {
+          try {
+            const CommentMinussql =
+              "UPDATE board SET comment_count = comment_count - 1 WHERE menu='" +
+              menu +
+              "' AND idx=" +
+              idx +
+              ";";
+            con.query(CommentMinussql, (err, results) => {});
+            return res.send("/");
+          } catch (exception) {
+            return res.send("error");
+          }
+        });
+      } else return res.send("error");
+    } catch (exception) {
+      return res.send("error");
+    }
+  });
+});
+
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 게시글 작성
+
+router.route("/Posting").get(function (req, res) {
+  const menu = req.query.BoardPath;
+  const userid = req.query.userid;
+  const contents = req.query.contents;
+  const title = req.query.title;
+  const curr = new Date();
+  const utc = curr.getTime() + 9 * 60 * 60 * 1000;
+  let today = new Date(utc);
+  let dd = today.getDate();
+  let mm = today.getMonth() + 1; //January is 0!
+  let yyyy = today.getFullYear();
+  let hour = today.getHours();
+  let minute = today.getMinutes();
+  let second = today.getSeconds();
+
+  if (dd < 10) {
+    dd = "0" + dd;
+  }
+
+  if (mm < 10) {
+    mm = "0" + mm;
+  }
+
+  today = yyyy + "-" + mm + "-" + dd + " " + hour + ":" + minute + ":" + second;
+
+  const Indexsql =
+    "SELECT idx FROM board WHERE menu='" + menu + "'order by idx desc LIMIT 1";
+
+  con.query(Indexsql, (err, results) => {
+    try {
+      const Tojson = JSON.parse(JSON.stringify(results));
+      const index = Tojson[0].idx + 1;
+
+      console.log(
+        "Get " + menu + "의 " + index + "번째 글을 " + userid + "가 작성"
+      );
+
+      const sql =
+        "INSERT INTO board ( contents, date, menu, writer, idx, views, recommend, title, recommend_users) VALUES ( '" +
+        contents +
+        "' , '" +
+        today +
+        "', '" +
+        menu +
+        "', '" +
+        userid +
+        "', '" +
+        index +
+        "', 0 , 0,'" +
+        title +
+        "', '/');";
+
+      con.query(sql, (err, results) => {
+        try {
+        } catch (exception) {
+          return res.send("error");
+        }
+        // const cmtSql =
+        //   "SELECT contents,date,writer,idx FROM comment WHERE menu='" +
+        //   menu +
+        //   "' AND target=" +
+        //   idx +
+        //   " order by idx asc";
+        // con.query(cmtSql, (err, results) => {
+        //   const Tojson = JSON.parse(JSON.stringify(results));
+        //   if (err) throw err;
+        //   return res.send(Tojson);
+        // });
+      });
+    } catch (exception) {
+      return res.send("error");
+    }
+  });
+  return res.send("/");
+});
+
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 게시글 삭제
+
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 추천 기능
 router.route("/Recommend").get(function (req, res) {
   const idx = req.query.PostNum;
   const menu = req.query.BoardPath;
@@ -406,144 +617,178 @@ router.route("/Recommend").get(function (req, res) {
     // 숫자이여야지만 들어가게
 
     con.query(IDsql, (err, results) => {
-      const Tojson = JSON.parse(JSON.stringify(results));
-      Query_id = Tojson[0].id;
-
-      console.log("Get " + menu + "의 " + idx + "번글 " + userid + "님이 추천");
-
-      // 일반 게시판일때
-      const sql =
-        "SELECT recommend, recommend_users FROM board WHERE menu='" +
-        menu +
-        "' AND idx=" +
-        idx +
-        " order by idx asc";
-
-      con.query(sql, [idx, menu, userid, state], (err, results) => {
+      try {
         const Tojson = JSON.parse(JSON.stringify(results));
-        Recommend_count = Tojson[0].recommend;
-        Recommend_users = Tojson[0].recommend_users;
+        Query_id = Tojson[0].id;
 
-        // 눌 -> 값 -1 , 배열에서 지우기     /1/2/3/4 =>  /id/ 찾아서 id/ 지우고 다시 붙이기
-        if (state == "true") {
-          const RecommendUpdatesql =
-            "UPDATE board SET recommend= recommend - 1 WHERE menu='" +
-            menu +
-            "' AND idx=" +
-            idx +
-            ";";
-          con.query(RecommendUpdatesql, (err, results) => {});
+        console.log(
+          "Get " + menu + "의 " + idx + "번글 " + userid + "님이 추천"
+        );
 
-          const Userfindsql =
-            "SELECT recommend_users FROM board WHERE menu='" +
-            menu +
-            "' AND idx=" +
-            idx;
+        // 일반 게시판일때
+        const sql =
+          "SELECT recommend, recommend_users FROM board WHERE menu='" +
+          menu +
+          "' AND idx=" +
+          idx +
+          " order by idx asc";
 
-          let TempString = "/";
-          let Userupdatesql = "";
-          con.query(Userfindsql, (err, results) => {
+        con.query(sql, [idx, menu, userid, state], (err, results) => {
+          try {
             const Tojson = JSON.parse(JSON.stringify(results));
-            TempString = Tojson[0].recommend_users;
-            TempString = TempString.replace("/" + Query_id + "/", "/");
-            Userupdatesql =
-              "UPDATE board SET recommend_users='" +
-              TempString +
-              "' WHERE menu='" +
-              menu +
-              "' AND idx=" +
-              idx;
-            con.query(Userupdatesql, (err, results) => {});
-            return res.send({
-              state: false,
-              Recommend_count: Recommend_count - 1,
-            });
-          });
-        }
+            Recommend_count = Tojson[0].recommend;
+            Recommend_users = Tojson[0].recommend_users;
 
-        // 안눌 -> 값 +1 , 배열에 추가      마지막에  id/ 추가
-        else {
-          const RecommendUpdatesql =
-            "UPDATE board SET recommend= recommend + 1 WHERE menu='" +
-            menu +
-            "' AND idx=" +
-            idx +
-            ";";
-          con.query(RecommendUpdatesql, (err, results) => {});
+            // 눌 -> 값 -1 , 배열에서 지우기     /1/2/3/4 =>  /id/ 찾아서 id/ 지우고 다시 붙이기
+            if (state == "true") {
+              const RecommendUpdatesql =
+                "UPDATE board SET recommend= recommend - 1 WHERE menu='" +
+                menu +
+                "' AND idx=" +
+                idx +
+                ";";
+              con.query(RecommendUpdatesql, (err, results) => {
+                try {
+                } catch (exception) {
+                  return res.send("error");
+                }
+              });
 
-          const Userfindsql =
-            "SELECT recommend_users FROM board WHERE menu='" +
-            menu +
-            "' AND idx=" +
-            idx;
+              const Userfindsql =
+                "SELECT recommend_users FROM board WHERE menu='" +
+                menu +
+                "' AND idx=" +
+                idx;
 
-          let TempString = "/";
-          let Userupdatesql = "";
-          con.query(Userfindsql, (err, results) => {
-            const Tojson = JSON.parse(JSON.stringify(results));
-            TempString = Tojson[0].recommend_users;
-            TempString = TempString.concat(Query_id + "/");
-            Userupdatesql =
-              "UPDATE board SET recommend_users='" +
-              TempString +
-              "' WHERE menu='" +
-              menu +
-              "' AND idx=" +
-              idx;
-            con.query(Userupdatesql, (err, results) => {});
-            return res.send({
-              state: true,
-              Recommend_count: Recommend_count + 1,
-            });
-          });
-        }
-      });
+              let TempString = "/";
+              let Userupdatesql = "";
+              con.query(Userfindsql, (err, results) => {
+                try {
+                  const Tojson = JSON.parse(JSON.stringify(results));
+                  TempString = Tojson[0].recommend_users;
+                  TempString = TempString.replace("/" + Query_id + "/", "/");
+                  Userupdatesql =
+                    "UPDATE board SET recommend_users='" +
+                    TempString +
+                    "' WHERE menu='" +
+                    menu +
+                    "' AND idx=" +
+                    idx;
+                  con.query(Userupdatesql, (err, results) => {
+                    try {
+                    } catch (exception) {
+                      return res.send("error");
+                    }
+                  });
+                  return res.send({
+                    state: false,
+                    Recommend_count: Recommend_count - 1,
+                  });
+                } catch (exception) {
+                  return res.send("error");
+                }
+              });
+            }
+
+            // 안눌 -> 값 +1 , 배열에 추가      마지막에  id/ 추가
+            else {
+              const RecommendUpdatesql =
+                "UPDATE board SET recommend= recommend + 1 WHERE menu='" +
+                menu +
+                "' AND idx=" +
+                idx +
+                ";";
+              con.query(RecommendUpdatesql, (err, results) => {});
+
+              const Userfindsql =
+                "SELECT recommend_users FROM board WHERE menu='" +
+                menu +
+                "' AND idx=" +
+                idx;
+
+              let TempString = "/";
+              let Userupdatesql = "";
+              con.query(Userfindsql, (err, results) => {
+                const Tojson = JSON.parse(JSON.stringify(results));
+                TempString = Tojson[0].recommend_users;
+                TempString = TempString.concat(Query_id + "/");
+                Userupdatesql =
+                  "UPDATE board SET recommend_users='" +
+                  TempString +
+                  "' WHERE menu='" +
+                  menu +
+                  "' AND idx=" +
+                  idx;
+                con.query(Userupdatesql, (err, results) => {});
+                return res.send({
+                  state: true,
+                  Recommend_count: Recommend_count + 1,
+                });
+              });
+            }
+          } catch (exception) {
+            return res.send("error");
+          }
+        });
+      } catch (exception) {
+        return res.send("error");
+      }
     });
   }
 });
 
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 메인페이지 데이터
 router.route("/Home").get(function (req, res) {
   console.log("Get Home");
   let ResJson = [];
   // 일반 게시판일때
   const Noticesql =
-    "SELECT title,contents,idx,date FROM board WHERE menu='공지사항' order by idx desc LIMIT 2";
+    "SELECT title,contents,idx,date FROM board WHERE menu='공지사항' order by idx desc LIMIT 3";
 
   const FreeForumsql =
-    "SELECT title,contents,idx,date FROM board WHERE menu='자유게시판' order by idx desc LIMIT 1";
+    "SELECT title,contents,idx,date FROM board WHERE menu='자유게시판' order by idx desc LIMIT 3";
 
   const QuestionForumsql =
-    "SELECT title,contents,idx,date FROM board WHERE menu='질문게시판' order by idx desc LIMIT 1";
+    "SELECT title,contents,idx,date FROM board WHERE menu='질문게시판' order by idx desc LIMIT 3";
 
   const AdvertisingForumsql =
-    "SELECT title,contents,idx,date FROM board WHERE menu='홍보게시판' order by idx desc LIMIT 1";
+    "SELECT title,contents,idx,date FROM board WHERE menu='홍보게시판' order by idx desc LIMIT 3";
+
+  const Gallerysql =
+    "SELECT title,idx,date,path,filename FROM board WHERE menu='2021' order by idx desc LIMIT 3";
 
   con.query(Noticesql, (err, results) => {
     const Tojson = JSON.parse(JSON.stringify(results));
     if (err) throw err;
     ResJson.push(Tojson);
-  });
 
-  con.query(FreeForumsql, (err, results) => {
-    const Tojson = JSON.parse(JSON.stringify(results));
-    if (err) throw err;
-    ResJson.push(Tojson);
-  });
+    con.query(FreeForumsql, (err, results) => {
+      const Tojson = JSON.parse(JSON.stringify(results));
+      if (err) throw err;
+      ResJson.push(Tojson);
 
-  con.query(QuestionForumsql, (err, results) => {
-    const Tojson = JSON.parse(JSON.stringify(results));
-    if (err) throw err;
-    ResJson.push(Tojson);
-  });
+      con.query(QuestionForumsql, (err, results) => {
+        const Tojson = JSON.parse(JSON.stringify(results));
+        if (err) throw err;
+        ResJson.push(Tojson);
 
-  con.query(AdvertisingForumsql, (err, results) => {
-    const Tojson = JSON.parse(JSON.stringify(results));
-    if (err) throw err;
-    ResJson.push(Tojson);
-    return res.send(ResJson);
+        con.query(AdvertisingForumsql, (err, results) => {
+          const Tojson = JSON.parse(JSON.stringify(results));
+          if (err) throw err;
+          ResJson.push(Tojson);
+          con.query(Gallerysql, (err, results) => {
+            const Tojson = JSON.parse(JSON.stringify(results));
+            if (err) throw err;
+            ResJson.push(Tojson);
+            return res.send(ResJson);
+          });
+        });
+      });
+    });
   });
 });
 
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 크롤링 테스트 페이지
 router.route("/Test").get(function (req, res) {
   // 크롤링을 위한 import (axios, cheerio)
   const axios = require("axios");
@@ -612,8 +857,13 @@ router.route("/Test").get(function (req, res) {
     .then((res) => console.log("결과", res));
 });
 
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 라우팅 ( 마지막에 써줘야함 )
 app.use("/", router);
+
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 잘못된 요청
 app.all("*", function (req, res) {
   res.status(404).send("<h1> 요청 페이지 없음 </h1>");
 });
+
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 리슨
 app.listen(port, () => console.log("Example app listening on  " + port));
