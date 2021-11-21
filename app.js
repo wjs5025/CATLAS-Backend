@@ -61,8 +61,12 @@ app.use((req, res, next) => {
 
         if (results[0] != undefined && req.session.Id === ID) {
           //res.send({ access: true });
+          //req.session.isLogined=true;
+          //next();
         } else {
           //res.send({ access: false });
+          //req.session.isLogined=false;
+          //next();
         }
       } catch (exception) {
         return res.send("error");
@@ -111,15 +115,15 @@ router.get("/", (req, res, next) => {
 
 //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 로그인
 
+console.log("Post SignIn");
 router.route("/SignIn").post(function (req, res) {
-  console.log("Post SignIn");
-
   const userid = req.body.params.userid;
   const pwd2 = req.body.params.password;
   const sql = "SELECT * FROM users WHERE userid=?";
   const SHA2 = "SHA2('" + pwd2 + "', 256)";
   const pwdHasing = "SELECT " + SHA2 + ";";
   let pwd;
+
   con.query(pwdHasing, (err, results) => {
     try {
       const New = Object.values(JSON.parse(JSON.stringify(results[0])));
@@ -137,11 +141,8 @@ router.route("/SignIn").post(function (req, res) {
           req.session.isLogined = true;
           req.session.Id = user.userid;
 
-          // console.log("넘기는값", req.session);
           req.session.save(function () {
             return res.send(req.sessionID);
-            //return res.render("/Signout", { id: req.session.id });
-            //return res.send("login success");
           });
         } else return res.send("error");
       } catch (exception) {
@@ -151,7 +152,7 @@ router.route("/SignIn").post(function (req, res) {
   });
 });
 
-//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 회원가입
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 회원가입  중복 아이디 검사!
 
 router.route("/SignUp").post(function (req, res) {
   console.log("Post SignUp");
@@ -161,6 +162,7 @@ router.route("/SignUp").post(function (req, res) {
   const name = req.body.params.name;
   const email = req.body.params.email;
   const phonenumber = req.body.params.phonenumber;
+
   const sql =
     "INSERT INTO users ( userid, password, name, email, phonenumber) VALUES ( '" +
     userid +
@@ -175,7 +177,6 @@ router.route("/SignUp").post(function (req, res) {
     "');";
 
   con.query(sql, [name], (err, results) => {
-    // console.log("User info is: ", results);
     try {
       return res.send("Clear");
     } catch (exception) {
@@ -189,16 +190,8 @@ app.use("/ImageLinking", function (req, res) {
   console.log("ImageLinking");
   const path = req.query.path;
   const filename = req.query.filename;
-  //console.log(path, filename);
   res.sendFile(__dirname + path + filename);
 });
-//path.join(__dirname, "/assets/Catlas_Gallery/2021", "Corner1.png")
-
-//
-
-// router.get("/Fourm", (req, res, next) => {
-//   res.redirect("/자유게시판");
-// });
 
 //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 게시글 목록
 
@@ -212,12 +205,17 @@ router.route("/Board").get(function (req, res) {
     sql =
       "SELECT menu,writer,date,views,idx,title,path,filename,comment_count FROM board WHERE menu='" +
       menu +
-      "' order by idx asc";
+      "' order by idx desc";
+  } else if (menu === "HOT게시판") {
+    // HOT게시판
+    sql =
+      "SELECT menu,writer,date,views,idx,title,recommend,comment_count FROM board WHERE menu IN('자유게시판','질문게시판','홍보게시판','동아리게시판','IT게시판') order by recommend desc LIMIT 10;";
+    menu + "' order by idx asc";
   } else {
     sql =
       "SELECT menu,writer,date,views,idx,title,recommend,comment_count FROM board WHERE menu='" +
       menu +
-      "' order by idx asc";
+      "' order by idx desc";
   }
   con.query(sql, (err, results) => {
     try {
@@ -265,6 +263,7 @@ router.route("/Detail").get(function (req, res) {
 
   // 글 담기.
   // 1. 글 정보
+
   if (!isNaN(idx)) {
     // 숫자이여야지만 들어가게
 
@@ -368,7 +367,7 @@ router.route("/Detail").get(function (req, res) {
         });
       });
     });
-  } else return res.send("error");
+  } else return res.send("error1");
 });
 
 //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 댓글  작성
@@ -406,29 +405,26 @@ router.route("/Comment").get(function (req, res) {
     " order by idx desc LIMIT 1";
 
   con.query(Indexsql, (err, results) => {
-    try {
-      const Tojson = JSON.parse(JSON.stringify(results));
-      let index = 0;
-      if (!Tojson[0]) {
-        index = 1;
-      } else {
-        index = Tojson[0].idx + 1;
-      }
-
-      console.log(
-        "Get " +
-          menu +
-          "의 " +
-          idx +
-          "번글 " +
-          index +
-          "번째 Comment를 " +
-          userid +
-          "가 작성"
-      );
-    } catch (exception) {
-      return res.send("error");
+    const Tojson = JSON.parse(JSON.stringify(results));
+    let index = 0;
+    if (!Tojson[0]) {
+      index = 1;
+    } else {
+      index = Tojson[0].idx + 1;
     }
+
+    console.log(
+      "Get " +
+        menu +
+        "의 " +
+        idx +
+        "번글 " +
+        index +
+        "번째 Comment를 " +
+        userid +
+        "가 작성"
+    );
+
     const sql =
       "INSERT INTO comment ( contents, date, menu, writer, idx, target) VALUES ( '" +
       contents +
@@ -580,17 +576,6 @@ router.route("/Posting").get(function (req, res) {
         } catch (exception) {
           return res.send("error");
         }
-        // const cmtSql =
-        //   "SELECT contents,date,writer,idx FROM comment WHERE menu='" +
-        //   menu +
-        //   "' AND target=" +
-        //   idx +
-        //   " order by idx asc";
-        // con.query(cmtSql, (err, results) => {
-        //   const Tojson = JSON.parse(JSON.stringify(results));
-        //   if (err) throw err;
-        //   return res.send(Tojson);
-        // });
       });
     } catch (exception) {
       return res.send("error");
@@ -599,7 +584,80 @@ router.route("/Posting").get(function (req, res) {
   return res.send("/");
 });
 
+//ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 게시글 수정
+router.route("/Post_Modify").get(function (req, res) {
+  const idx = req.query.PostNum;
+  const menu = req.query.BoardPath;
+  const userid = req.query.userid;
+  const contents = req.query.contents;
+  const title = req.query.title;
+  const sql =
+    "SELECT writer FROM board WHERE menu='" + menu + "' AND idx=" + idx + ";";
+
+  con.query(sql, (err, results) => {
+    try {
+      const Tojson = JSON.parse(JSON.stringify(results));
+
+      if (Tojson[0].writer === userid) {
+        const Modsql =
+          "UPDATE board SET title = '" +
+          title +
+          "' , contents = '" +
+          contents +
+          "'  WHERE menu='" +
+          menu +
+          "' AND idx=" +
+          idx +
+          ";";
+
+        con.query(Modsql, (err, results) => {
+          try {
+            return res.send("/");
+          } catch (exception) {
+            return res.send("error");
+          }
+        });
+      } else return res.send("error");
+    } catch (exception) {
+      return res.send("error");
+    }
+  });
+});
+
 //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 게시글 삭제
+router.route("/Post_Delete").get(function (req, res) {
+  const idx = req.query.PostNum;
+  const menu = req.query.BoardPath;
+  const userid = req.query.user_id;
+  const sql =
+    "SELECT writer FROM board WHERE menu='" + menu + "' AND idx=" + idx + ";";
+
+  con.query(sql, (err, results) => {
+    try {
+      const Tojson = JSON.parse(JSON.stringify(results));
+      if (Tojson[0].writer === userid) {
+        const Delsql =
+          "DELETE FROM board WHERE menu='" + menu + "' AND idx=" + idx + ";";
+        con.query(Delsql, (err, results) => {
+          try {
+            const CommentlDelsql =
+              "DELETE FROM comment WHERE menu='" +
+              menu +
+              "' AND target=" +
+              idx +
+              ";";
+            con.query(CommentlDelsql, (err, results) => {});
+            return res.send("/");
+          } catch (exception) {
+            return res.send("error");
+          }
+        });
+      } else return res.send("error");
+    } catch (exception) {
+      return res.send("error");
+    }
+  });
+});
 
 //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 추천 기능
 router.route("/Recommend").get(function (req, res) {
@@ -789,8 +847,7 @@ router.route("/Home").get(function (req, res) {
 });
 
 //ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ 크롤링 테스트 페이지
-router.route("/Test").get(function (req, res) {
-  // 크롤링을 위한 import (axios, cheerio)
+router.route("/Crawling").get(function (req, res) {
   const axios = require("axios");
   const cheerio = require("cheerio");
 
